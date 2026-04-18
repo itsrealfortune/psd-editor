@@ -24,7 +24,7 @@
     "standalone-build": "bunx esbuild src/standalone.ts --bundle --platform=node --target=node18 --outfile=standalone.js --tree-shaking=true --minify --sourcemap"
   },
   "dependencies": {
-    "ag-psd": "^17.0.0",
+    "ag-psd": "^30.1.1",
     "canvas": "^2.11.2",
     "sharp": "^0.33.0"
   },
