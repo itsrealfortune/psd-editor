@@ -1,6 +1,6 @@
 {
   "name": "psd-template",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Edit PSD text & smart-object layers then export pixel-perfect PNG via ImageMagick",
   "type": "module",
   "repository": {
