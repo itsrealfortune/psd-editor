@@ -21,9 +21,38 @@ fi
 
 git fetch --tags --quiet
 
+TAG_EXISTS_LOCAL="false"
+TAG_EXISTS_REMOTE="false"
+
 if git rev-parse --verify --quiet "refs/tags/${TAG}" >/dev/null; then
-  echo "Error: tag ${TAG} already exists."
-  exit 1
+  TAG_EXISTS_LOCAL="true"
+fi
+
+if git ls-remote --tags origin "refs/tags/${TAG}" | grep -q .; then
+  TAG_EXISTS_REMOTE="true"
+fi
+
+if [[ "${TAG_EXISTS_LOCAL}" == "true" || "${TAG_EXISTS_REMOTE}" == "true" ]]; then
+  echo "Tag ${TAG} already exists. Deleting existing release/tag before republishing."
+
+  if command -v gh >/dev/null 2>&1; then
+    if gh release view "${TAG}" >/dev/null 2>&1; then
+      gh release delete "${TAG}" --yes
+      echo "GitHub release ${TAG} deleted."
+    fi
+  else
+    echo "gh CLI not found; skipping GitHub release deletion."
+  fi
+
+  if [[ "${TAG_EXISTS_LOCAL}" == "true" ]]; then
+    git tag -d "${TAG}" >/dev/null
+    echo "Local tag ${TAG} deleted."
+  fi
+
+  if [[ "${TAG_EXISTS_REMOTE}" == "true" ]]; then
+    git push origin ":refs/tags/${TAG}" >/dev/null
+    echo "Remote tag ${TAG} deleted."
+  fi
 fi
 
 git tag -a "${TAG}" -m "Release ${TAG}"
@@ -33,11 +62,12 @@ echo "Tag ${TAG} pushed."
 
 if command -v gh >/dev/null 2>&1; then
   if gh release view "${TAG}" >/dev/null 2>&1; then
-    echo "GitHub release ${TAG} already exists."
-  else
-    gh release create "${TAG}" --title "${TAG}" --generate-notes
-    echo "GitHub release ${TAG} created."
+    gh release delete "${TAG}" --yes
+    echo "GitHub release ${TAG} deleted before recreate."
   fi
+
+  gh release create "${TAG}" --title "${TAG}" --generate-notes
+  echo "GitHub release ${TAG} created."
 else
   echo "gh CLI not found; skipping GitHub release creation."
 fi
