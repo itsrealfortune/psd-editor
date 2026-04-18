@@ -13,47 +13,13 @@ permissions:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    env:
-      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
     steps:
       - uses: actions/checkout@v6
 
-      - name: Cache apt packages (canvas native deps)
-        uses: awalsh128/cache-apt-pkgs-action@v1
-        with:
-          packages: build-essential libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev libpixman-1-dev pkg-config
-          version: 1.0
-
       - uses: actions/setup-node@v6
         with:
-          node-version: '22'
+          node-version: '24'
           registry-url: 'https://registry.npmjs.org'
-
-      - name: Cache npm
-        uses: actions/cache@v4
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-npm-${{ hashFiles('package.json') }}
-          restore-keys: |
-            ${{ runner.os }}-npm-
-
-      - run: npm install --prefer-offline --no-audit
+      - run: npm install
       - run: npm run build --if-present
-
-      - name: Publish package
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          if [[ -n "${NPM_TOKEN:-}" ]]; then
-            echo "Using NPM_TOKEN publish path"
-            NODE_AUTH_TOKEN="${NPM_TOKEN}" npm publish --access public
-          else
-            echo "Using trusted publishing (OIDC) path"
-            # setup-node can inject NODE_AUTH_TOKEN by default; clear it for OIDC publish
-            unset NODE_AUTH_TOKEN
-            if ! npm publish --provenance --access public; then
-              echo "OIDC publish failed. Ensure npm Trusted Publisher is configured for this repo/workflow, or set NPM_TOKEN secret as fallback."
-              exit 1
-            fi
-          fi
+      - run: npm publish
