@@ -2,6 +2,10 @@
   "name": "psd-template",
   "version": "1.0.1",
   "description": "Edit PSD text & smart-object layers then export pixel-perfect PNG via ImageMagick",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/itsrealfortune/psd-editor"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
