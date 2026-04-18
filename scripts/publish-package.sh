@@ -50,7 +50,7 @@ if [[ "${TAG_EXISTS_LOCAL}" == "true" || "${TAG_EXISTS_REMOTE}" == "true" ]]; th
   fi
 
   if [[ "${TAG_EXISTS_REMOTE}" == "true" ]]; then
-    git push origin ":refs/tags/${TAG}" >/dev/null
+    git push --delete origin "${TAG}" >/dev/null
     echo "Remote tag ${TAG} deleted."
   fi
 fi
@@ -61,11 +61,6 @@ git push origin "${TAG}"
 echo "Tag ${TAG} pushed."
 
 if command -v gh >/dev/null 2>&1; then
-  if gh release view "${TAG}" >/dev/null 2>&1; then
-    gh release delete "${TAG}" --yes
-    echo "GitHub release ${TAG} deleted before recreate."
-  fi
-
   gh release create "${TAG}" --title "${TAG}" --generate-notes
   echo "GitHub release ${TAG} created."
 else

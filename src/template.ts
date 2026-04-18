@@ -1,18 +1,18 @@
-import * as fs from "node:fs";
-import * as path from "node:path";
-import * as os from "node:os";
 import { execSync } from "node:child_process";
+import * as fs from "node:fs";
+import * as os from "node:os";
+import * as path from "node:path";
 
-import "ag-psd/initialize-canvas";
-import { readPsd, writePsdBuffer } from "ag-psd";
 import type { Layer, Psd } from "ag-psd";
+import { readPsd, writePsdBuffer } from "ag-psd";
+import "ag-psd/initialize-canvas";
 
 import sharp from "sharp";
 import {
 	findLayerByName,
 	getLinkedFile,
-	printLayerTree,
 	inspectLayers,
+	printLayerTree,
 } from "./layers.js";
 import type {
 	ExportOptions,
@@ -119,9 +119,14 @@ async function applyImageReplacements(
 
 		const fit = rep.fit ?? "cover";
 
+		const resized = sharp(rep.imagePath).resize(w, h, {
+			fit: sharpFit[fit],
+			position: "center",
+		});
+
 		// Build a node-canvas from the resized source image
-		const { data, info } = await sharp(rep.imagePath)
-			.resize(w, h, { fit: sharpFit[fit], position: "center" })
+		const { data, info } = await resized
+			.clone()
 			.ensureAlpha()
 			.raw()
 			.toBuffer({ resolveWithObject: true });
@@ -140,10 +145,7 @@ async function applyImageReplacements(
 		// layer.placedLayer.id matches psd.linkedFiles[n].id
 		const linkedFile = getLinkedFile(psd, layer);
 		if (linkedFile) {
-			const pngBuf = await sharp(rep.imagePath)
-				.resize(w, h, { fit: sharpFit[fit], position: "center" })
-				.png()
-				.toBuffer();
+			const pngBuf = await resized.clone().png().toBuffer();
 
 			linkedFile.data = new Uint8Array(pngBuf);
 			console.log(
