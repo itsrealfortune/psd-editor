@@ -40,12 +40,18 @@ jobs:
       - run: npm install --prefer-offline --no-audit
       - run: npm run build --if-present
 
-      - name: Publish with npm trusted publishing (OIDC)
-        if: ${{ env.NPM_TOKEN == '' }}
-        run: npm publish --provenance --access public
+      - name: Publish package
+        shell: bash
+        run: |
+          set -euo pipefail
 
-      - name: Publish with npm token fallback
-        if: ${{ env.NPM_TOKEN != '' }}
-        env:
-          NODE_AUTH_TOKEN: ${{ env.NPM_TOKEN }}
-        run: npm publish --access public
+          if [[ -n "${NPM_TOKEN:-}" ]]; then
+            echo "Using NPM_TOKEN publish path"
+            NODE_AUTH_TOKEN="${NPM_TOKEN}" npm publish --access public
+          else
+            echo "Using trusted publishing (OIDC) path"
+            if ! npm publish --provenance --access public; then
+              echo "OIDC publish failed. Ensure npm Trusted Publisher is configured for this repo/workflow, or set NPM_TOKEN secret as fallback."
+              exit 1
+            fi
+          fi
