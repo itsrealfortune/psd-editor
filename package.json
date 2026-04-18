@@ -4,12 +4,24 @@
   "description": "Edit PSD text & smart-object layers then export pixel-perfect PNG via ImageMagick",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "files": ["dist", "src", "README.md"],
+  "files": [
+    "dist",
+    "src",
+    "README.md"
+  ],
   "scripts": {
-    "build": "tsc",
     "build:watch": "tsc --watch",
     "typecheck": "tsc --noEmit",
-    "example": "ts-node --esm examples/example.ts"
+    "example": "ts-node --esm examples/example.ts",
+    "format": "bunx --bun @biomejs/biome format --write ./src",
+    "check": "bunx --bun @biomejs/biome check ./src",
+    "lint": "bunx --bun @biomejs/biome lint ./src",
+    "lint:write": "bunx --bun @biomejs/biome lint --write ./src",
+    "test": "bunx --bun @biomejs/biome test ./src",
+    "build": "tsc --project tsconfig.json",
+    "deploy:npm": "npm publish --access public",
+    "bench": "rm -rf .benchmark-shells/ && bun benchmark-virtualshell.ts",
+    "standalone-build": "bunx esbuild src/standalone.ts --bundle --platform=node --target=node18 --outfile=standalone.js --tree-shaking=true --minify --sourcemap"
   },
   "dependencies": {
     "ag-psd": "^17.0.0",
@@ -25,6 +37,13 @@
   "engines": {
     "node": ">=18.0.0"
   },
-  "keywords": ["psd", "photoshop", "template", "imagemagick", "png", "smart-object"],
+  "keywords": [
+    "psd",
+    "photoshop",
+    "template",
+    "imagemagick",
+    "png",
+    "smart-object"
+  ],
   "license": "MIT"
 }
