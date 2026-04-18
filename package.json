@@ -26,7 +26,7 @@
   "dependencies": {
     "ag-psd": "^17.0.0",
     "canvas": "^2.11.2",
-    "sharp": "^0.33.0"
+    "sharp": "^0.34.5"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.12",
