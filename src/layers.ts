@@ -7,7 +7,7 @@ import type { LayerInfo } from "./types.js";
  */
 export function walkLayers(
 	layers: Layer[],
-	fn: (layer: Layer, depth: number) => boolean | void,
+	fn: (layer: Layer, depth: number) => boolean | undefined,
 	depth = 0,
 ): void {
 	for (const layer of layers) {
