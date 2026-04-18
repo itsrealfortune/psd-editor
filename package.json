@@ -5,7 +5,7 @@
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "https://github.com/itsrealfortune/psd-editor"
+    "url": "git+https://github.com/itsrealfortune/psd-editor.git"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
