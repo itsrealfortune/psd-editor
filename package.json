@@ -1,0 +1,30 @@
+{
+  "name": "psd-template",
+  "version": "1.0.0",
+  "description": "Edit PSD text & smart-object layers then export pixel-perfect PNG via ImageMagick",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist", "src", "README.md"],
+  "scripts": {
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "typecheck": "tsc --noEmit",
+    "example": "ts-node --esm examples/example.ts"
+  },
+  "dependencies": {
+    "ag-psd": "^17.0.0",
+    "canvas": "^2.11.2",
+    "sharp": "^0.33.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "ts-node": "^10.9.0",
+    "typescript": "^5.4.0",
+    "@types/bun": "latest"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": ["psd", "photoshop", "template", "imagemagick", "png", "smart-object"],
+  "license": "MIT"
+}
