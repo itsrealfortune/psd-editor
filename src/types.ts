@@ -1,5 +1,15 @@
 /**
- * Configuration for a text layer replacement
+ * Configuration used to replace the content of a text layer.
+ *
+ * @example
+ * ```ts
+ * const title: TextReplacement = {
+ *   layerName: "Title",
+ *   text: "Black Friday",
+ *   fontSize: 72,
+ *   color: [255, 255, 255],
+ * };
+ * ```
  */
 export interface TextReplacement {
 	/** Layer name in the PSD (case-sensitive) */
@@ -13,7 +23,16 @@ export interface TextReplacement {
 }
 
 /**
- * Configuration for a smart object / image layer replacement
+ * Configuration used to replace an image or smart object layer.
+ *
+ * @example
+ * ```ts
+ * const heroImage: ImageReplacement = {
+ *   layerName: "Hero",
+ *   imagePath: "./assets/hero.jpg",
+ *   fit: "cover",
+ * };
+ * ```
  */
 export interface ImageReplacement {
 	/** Layer name in the PSD (case-sensitive) */
@@ -33,7 +52,17 @@ export interface ImageReplacement {
 }
 
 /**
- * Full set of replacements for one render pass
+ * Full set of replacements applied in a single render pass.
+ *
+ * Arrays are optional: you can replace only text, only images, or both.
+ *
+ * @example
+ * ```ts
+ * const replacements: TemplateReplacements = {
+ *   texts: [{ layerName: "Title", text: "Hello" }],
+ *   images: [{ layerName: "Photo", imagePath: "./photo.png" }],
+ * };
+ * ```
  */
 export interface TemplateReplacements {
 	texts?: TextReplacement[];
@@ -41,7 +70,16 @@ export interface TemplateReplacements {
 }
 
 /**
- * Options for the final PNG export
+ * Final PNG export options.
+ *
+ * @example
+ * ```ts
+ * const options: ExportOptions = {
+ *   outputPath: "./out/card.png",
+ *   compressionLevel: 7,
+ *   scale: 2,
+ * };
+ * ```
  */
 export interface ExportOptions {
 	/** Output PNG file path */
@@ -53,7 +91,21 @@ export interface ExportOptions {
 }
 
 /**
- * Describes a layer found in the PSD — useful for discovery
+ * Describes a layer returned by PSD inspection.
+ *
+ * This shape is intended for exploration (debugging, UI, validation)
+ * rather than direct PSD mutation.
+ *
+ * @example
+ * ```ts
+ * const layer: LayerInfo = {
+ *   name: "Title",
+ *   type: "text",
+ *   bounds: { top: 10, left: 20, bottom: 90, right: 600 },
+ *   visible: true,
+ *   textContent: "Sample",
+ * };
+ * ```
  */
 export interface LayerInfo {
 	name: string;

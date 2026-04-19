@@ -23,6 +23,35 @@ import type {
 
 // ─── Text replacements ────────────────────────────────────────────────────────
 
+/**
+ * Applies a list of text replacements to text layers in a PSD.
+ *
+ * For each entry:
+ * - the layer is resolved by exact name;
+ * - text content is replaced;
+ * - optional font size/color are applied to both the main style and
+ *   `styleRuns` to avoid per-run style overrides.
+ *
+ * Non-blocking issues (missing layer or wrong layer type) are logged and
+ * processing continues for remaining replacements.
+ *
+ * @param psd PSD document to mutate in memory.
+ * @param replacements Text replacement entries to apply.
+ * @returns `void`.
+ *
+ * @example
+ * ```ts
+ * applyTextReplacements(psd, [
+ *   { layerName: "Title", text: "Summer Collection" },
+ *   {
+ *     layerName: "Price",
+ *     text: "$29.90",
+ *     fontSize: 48,
+ *     color: [255, 255, 255],
+ *   },
+ * ]);
+ * ```
+ */
 function applyTextReplacements(
 	psd: Psd,
 	replacements: TextReplacement[],
@@ -83,6 +112,25 @@ function applyTextReplacements(
 
 // ─── Image replacements ───────────────────────────────────────────────────────
 
+/**
+ * Applies image replacements to bitmap and smart object layers.
+ *
+ * The source image is resized with `sharp` to the layer bounds, then injected
+ * into an `ag-psd`-compatible `canvas`. For smart objects, associated
+ * `LinkedFile` bytes are also replaced (PNG), preserving final PSD -> PNG output.
+ *
+ * @param psd PSD document to mutate in memory.
+ * @param replacements Image replacement entries to apply.
+ * @returns A promise that resolves when all replacements are complete.
+ *
+ * @example
+ * ```ts
+ * await applyImageReplacements(psd, [
+ *   { layerName: "Hero", imagePath: "./assets/hero.jpg", fit: "cover" },
+ *   { layerName: "Logo", imagePath: "./assets/logo.png", fit: "contain" },
+ * ]);
+ * ```
+ */
 async function applyImageReplacements(
 	psd: Psd,
 	replacements: ImageReplacement[],
@@ -161,6 +209,21 @@ async function applyImageReplacements(
 
 // ─── ImageMagick detection ────────────────────────────────────────────────────
 
+/**
+ * Detects the available ImageMagick command in the current environment.
+ *
+ * Tries `magick` (ImageMagick v7+) first, then `convert` (legacy naming).
+ * If neither command is found, throws an error with OS-specific install hints.
+ *
+ * @returns Executable command name to use (`magick` or `convert`).
+ * @throws {Error} If ImageMagick is not installed or not available in `PATH`.
+ *
+ * @example
+ * ```ts
+ * const magick = detectMagick();
+ * execSync(`${magick} input.psd -flatten output.png`);
+ * ```
+ */
 function detectMagick(): string {
 	for (const cmd of ["magick", "convert"]) {
 		try {
@@ -200,18 +263,60 @@ function detectMagick(): string {
 export class PsdTemplate {
 	private constructor(private readonly sourcePath: string) {}
 
-	/** Parse a PSD from disk and return a template instance. */
+	/**
+	 * Loads a PSD file from disk and returns a reusable template instance.
+	 *
+	 * This method first validates read access, then stores the absolute path.
+	 * Actual parsing happens on each `render()` call, allowing safe reuse of the
+	 * same instance across multiple renders without side effects.
+	 *
+	 * @param psdPath Path to the source PSD file.
+	 * @returns A promise resolving to a ready-to-use `PsdTemplate` instance.
+	 * @throws {Error} If the file does not exist or is not readable.
+	 *
+	 * @example
+	 * ```ts
+	 * const template = await PsdTemplate.load("./templates/card.psd");
+	 * ```
+	 */
 	static async load(psdPath: string): Promise<PsdTemplate> {
 		fs.accessSync(psdPath, fs.constants.R_OK);
 		return new PsdTemplate(path.resolve(psdPath));
 	}
 
-	/** Print the full layer tree to stdout. Use this to discover exact layer names. */
+	/**
+	 * Prints the complete layer tree to standard output.
+	 *
+	 * Useful for discovering exact layer names to use in
+	 * `TemplateReplacements`.
+	 *
+	 * @returns `void`.
+	 *
+	 * @example
+	 * ```ts
+	 * const tpl = await PsdTemplate.load("card.psd");
+	 * tpl.printLayers();
+	 * ```
+	 */
 	printLayers(): void {
 		printLayerTree(this.readPsd());
 	}
 
-	/** Return the layer tree as structured data (useful for building UIs or validation). */
+	/**
+	 * Returns the layer tree as structured data.
+	 *
+	 * Useful for building inspection UIs, running validations, or serializing
+	 * the layer structure.
+	 *
+	 * @returns Array of `LayerInfo` descriptors representing document layers.
+	 *
+	 * @example
+	 * ```ts
+	 * const tpl = await PsdTemplate.load("card.psd");
+	 * const layers = tpl.inspectLayers();
+	 * console.log(layers.map((l) => l.name));
+	 * ```
+	 */
 	inspectLayers() {
 		return inspectLayers(this.readPsd());
 	}
@@ -226,6 +331,25 @@ export class PsdTemplate {
 	 *   4. writePsdBuffer → temp .psd file
 	 *   5. ImageMagick -flatten → temp .png  (all blending modes preserved ✅)
 	 *   6. sharp optional scale → final outputPath
+	 *
+	 * @param replacements Object describing text and/or image replacements.
+	 * @param options Final PNG export options (path, compression, scaling).
+	 * @returns A promise that resolves once the output file is written to disk.
+	 * @throws {Error} If PSD parsing, image processing, or export fails.
+	 *
+	 * @example
+	 * ```ts
+	 * const tpl = await PsdTemplate.load("./templates/banner.psd");
+	 * await tpl.render(
+	 *   {
+	 *     texts: [{ layerName: "Headline", text: "New Arrivals" }],
+	 *     images: [
+	 *       { layerName: "Product", imagePath: "./images/product.jpg", fit: "cover" },
+	 *     ],
+	 *   },
+	 *   { outputPath: "./out/banner.png", compressionLevel: 7, scale: 2 },
+	 * );
+	 * ```
 	 */
 	async render(
 		replacements: TemplateReplacements,
@@ -278,6 +402,12 @@ export class PsdTemplate {
 		}
 	}
 
+	/**
+	 * Reads and parses the source PSD from disk with render-ready options
+	 * (layer image data and composite image data enabled).
+	 *
+	 * @returns Parsed `Psd` object ready for replacement operations.
+	 */
 	private readPsd(): Psd {
 		const buffer = fs.readFileSync(this.sourcePath);
 		return readPsd(buffer, {
